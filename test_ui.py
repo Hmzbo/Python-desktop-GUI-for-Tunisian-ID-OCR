@@ -1,0 +1,112 @@
+# -*- coding: utf-8 -*-
+
+# Form implementation generated from reading ui file 'test.ui'
+#
+# Created by: PyQt5 UI code generator 5.9.2
+#
+# WARNING! All changes made in this file will be lost!
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(1241, 529)
+        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+        self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
+        self.gridLayout.setObjectName("gridLayout")
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setContentsMargins(5, 5, 5, 5)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.tableDisplay = QtWidgets.QTableWidget(self.centralwidget)
+        self.tableDisplay.setObjectName("tableDisplay")
+        self.tableDisplay.setColumnCount(0)
+        self.tableDisplay.setRowCount(0)
+        self.horizontalLayout.addWidget(self.tableDisplay)
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setContentsMargins(5, 20, 5, 20)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.startstop_detection = QtWidgets.QPushButton(self.centralwidget)
+        self.startstop_detection.setEnabled(True)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.startstop_detection.sizePolicy().hasHeightForWidth())
+        self.startstop_detection.setSizePolicy(sizePolicy)
+        self.startstop_detection.setObjectName("startstop_detection")
+        self.verticalLayout.addWidget(self.startstop_detection)
+        spacerItem = QtWidgets.QSpacerItem(20, 250, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
+        self.verticalLayout.addItem(spacerItem)
+        self.line = QtWidgets.QFrame(self.centralwidget)
+        self.line.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line.setObjectName("line")
+        self.verticalLayout.addWidget(self.line)
+        self.openfile = QtWidgets.QPushButton(self.centralwidget)
+        self.openfile.setObjectName("openfile")
+        self.verticalLayout.addWidget(self.openfile)
+        self.createfile = QtWidgets.QPushButton(self.centralwidget)
+        self.createfile.setObjectName("createfile")
+        self.verticalLayout.addWidget(self.createfile)
+        self.line_2 = QtWidgets.QFrame(self.centralwidget)
+        self.line_2.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line_2.setObjectName("line_2")
+        self.verticalLayout.addWidget(self.line_2)
+        self.checkBox = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkBox.setTristate(False)
+        self.checkBox.setObjectName("checkBox")
+        self.verticalLayout.addWidget(self.checkBox)
+        self.horizontalLayout.addLayout(self.verticalLayout)
+        self.cameralabel = QtWidgets.QLabel(self.centralwidget)
+        self.cameralabel.setObjectName("cameralabel")
+        self.horizontalLayout.addWidget(self.cameralabel)
+        self.horizontalLayout.setStretch(1, 1)
+        self.horizontalLayout.setStretch(2, 3)
+        self.gridLayout.addLayout(self.horizontalLayout, 0, 0, 1, 1)
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1241, 21))
+        self.menubar.setObjectName("menubar")
+        self.menuFile = QtWidgets.QMenu(self.menubar)
+        self.menuFile.setObjectName("menuFile")
+        MainWindow.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(self.statusbar)
+        self.actionSettings = QtWidgets.QAction(MainWindow)
+        self.actionSettings.setObjectName("actionSettings")
+        self.actionExit = QtWidgets.QAction(MainWindow)
+        self.actionExit.setObjectName("actionExit")
+        self.menuFile.addAction(self.actionSettings)
+        self.menuFile.addAction(self.actionExit)
+        self.menubar.addAction(self.menuFile.menuAction())
+
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "Test"))
+        self.startstop_detection.setText(_translate("MainWindow", "Start/Stop Detection"))
+        self.openfile.setText(_translate("MainWindow", "Open File"))
+        self.createfile.setText(_translate("MainWindow", "Create File"))
+        self.checkBox.setStatusTip(_translate("MainWindow", "Auto-save changes made on the table manually."))
+        self.checkBox.setText(_translate("MainWindow", "Auto-save changes"))
+        self.cameralabel.setText(_translate("MainWindow", "TextLabel"))
+        self.menuFile.setTitle(_translate("MainWindow", "File"))
+        self.actionSettings.setText(_translate("MainWindow", "Settings"))
+        self.actionSettings.setShortcut(_translate("MainWindow", "F1"))
+        self.actionExit.setText(_translate("MainWindow", "Exit"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
+

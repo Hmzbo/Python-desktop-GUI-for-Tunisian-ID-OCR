@@ -1,0 +1,6 @@
+train: ../datasets/cins/Train/images
+val: ../datasets/cins/Train/images
+
+nc: 9
+
+names: ['cin_number','last_name','first_name','date_of_birth','place_of_birth','mother_name','job','address','cin_date']
