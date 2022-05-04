@@ -6,4 +6,5 @@ More details will be added in a pdf file on later versions of this project.
 To launch the GUI use the following command:\
 `python cin_detection_gui.py`
 
-The environment requirements are available in the `requirements.txt` file
+The GUI requires Python => 3.8
+The environment requirements are available in the `requirements.txt` file.

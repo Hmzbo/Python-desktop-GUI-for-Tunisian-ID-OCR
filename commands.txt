@@ -1,1 +1,0 @@
-generate py file from ui file: pyuic5 -x test.ui -o test_ui.py
