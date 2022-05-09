@@ -34,7 +34,7 @@ from utils.general import check_img_size, non_max_suppression, scale_coords
 from utils.datasets import letterbox
 from utils.plots import plot_one_box
 
-from Dialogs.new_file_dialog_ui import Ui_Dialog
+from Dialogs import new_file_dialog, settings_dialog
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
@@ -62,7 +62,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             'update':False,
             'project':'runs/detect',
             'name':'exp',
-            'exist-ok':False
+            'exist-ok':False,
+            'cap_h':720,
+            'cap_w':1280,
+            'cin_conf_thres':0.93,
+            'cin_sharp_thres':300,
+            'save_rec':True
             }
 
         self.opt['device'] = select_device(self.opt['device'])
@@ -192,7 +197,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.createfile.setStatusTip(_translate("MainWindow", "Create table file of type (CSV, Excel, ..etc)."))
         self.checkBox.setText(_translate("MainWindow", "Auto-save changes"))
         self.checkBox.setStatusTip(_translate("MainWindow", "Auto-save changes made on the table manually."))
-        self.cameralabel.setText(_translate("MainWindow", "TextLabel"))
+        self.cameralabel.setText(_translate("MainWindow", "Press 'Start Detection' button\nto start CIN detection process"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.actionSettings.setText(_translate("MainWindow", "Settings"))
         self.actionSettings.setShortcut(_translate("MainWindow", "F1"))
@@ -200,6 +205,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def init_slots(self):
         self.actionExit.triggered.connect(self.exit_clicked)
+        self.actionSettings.triggered.connect(self.settings_clicked)
         self.button_startstop_detection.clicked.connect(self.startstop_detection)
         self.openfile.clicked.connect(self.Open_file)
         self.createfile.clicked.connect(self.Create_file)
@@ -209,13 +215,25 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def exit_clicked(self):
         close = QtWidgets.QMessageBox.question(self,
-                                        "QUIT",
+                                        "Exit",
                                         "Are you sure want to exit?",
                                         QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
         if close == QtWidgets.QMessageBox.Yes:
             self.close()
         else:
             return None
+
+    def settings_clicked(self):
+        settings = settings_dialog.Ui_Dialog()
+        resolution, camera_index, conf_thresh, sharp_thresh, save = settings.get_inputs()
+        if camera_index:
+            res_dic={720:1280, 480:720, 576:720, 1080:1920}
+            self.opt['source']=int(camera_index)
+            self.opt['cap_h']=int(resolution[:-1])
+            self.opt['cap_w']=res_dic[int(resolution[:-1])]
+            self.opt['cin_conf_thres']=float(int(conf_thresh[:2])/100)
+            self.opt['cin_sharp_thres']=int(sharp_thresh[:3])
+            self.opt['save_rec']=save
         
     ##########################################
 
@@ -262,7 +280,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.button_startstop_detection.setText(u"Start Detection")
             del(self.CamThread)
             gc.collect()
-            self.cameralabel.clear()
+            self.cameralabel.setText("MainWindow", "Press 'Start Detection' button\nto start CIN detection process")
 
             self.horizontalLayout.setStretch(0, 3)
             self.horizontalLayout.setStretch(1, 1)
@@ -392,7 +410,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     
 
     def Create_file(self):
-        new_file_ui = Ui_Dialog()
+        new_file_ui = new_file_dialog.Ui_Dialog()
         new_file_name, new_file_type = new_file_ui.get_inputs()
         if (not new_file_name is None) and (not new_file_type is None):
             msg = self.validate_file_name(new_file_name, new_file_type)
@@ -471,14 +489,19 @@ class Worker1(QtCore.QThread):
     def __init__(self, yolo_config):
         super().__init__()
         self.opt = yolo_config
-        self.out = cv2.VideoWriter('prediction.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 25, (1280,720))
+        if self.opt['save_rec']:
+            i = 0
+            while os.path.exists(f'./recorded detections/prediction_{i}.mp4'):
+                i += 1
+            os.listdir('./recorded detections')
+            self.out = cv2.VideoWriter(f'./recorded detections/prediction_{i}.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 25, (1280,720))
 
     # Running Yolov5
     def run(self):
         self.ThreadActive = True
         cap = cv2.VideoCapture(self.opt['source'])
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.opt['cap_h'])
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.opt['cap_w'])
         name_list = []
         self.emission={}
         cin_front_detected = False
@@ -549,22 +572,22 @@ class Worker1(QtCore.QThread):
                         # Checking if a CIN is detected and pausing capture if positive,
                         # and returning detected objects
                         #im0 = sharpen_image(im0, 1)
-                        sharpness_thresh = 250.0
+
                         gray = cv2.cvtColor(im0, cv2.COLOR_BGR2GRAY)
                         fm = variance_of_laplacian(gray)
                         blurry = False
-                        if fm<sharpness_thresh:
+                        if fm<self.opt['cin_sharp_thres']:
                             blurry = True
                         if confidence_scores:
                             if np.mean(confidence_scores)>0:
                                 print(f'mean conf: {np.mean(confidence_scores)}, blur: {fm}')
-                        if {'first_name', 'last_name', 'date_of_birth','place_of_birth', 'cin_number'}.issubset(set(objects_names)) and np.mean(confidence_scores)>=0.91 \
-                            and np.mean(confidence_scores)>conf_front and blurry == False:
+                        if {'first_name', 'last_name', 'date_of_birth','place_of_birth', 'cin_number'}.issubset(set(objects_names))\
+                             and np.mean(confidence_scores)>=self.opt['cin_conf_thres'] and np.mean(confidence_scores)>conf_front and blurry == False:
                             conf_front = np.mean(confidence_scores)
                             cin_front_detected = True
                             color_text_front = (0,255,0)
                             yolo_res['front']=[bboxes_info, confidence_scores, class_indexes, objects_names, im00, cropped_imgs]
-                        if {'mother_name', 'job', 'address','cin_date'}.issubset(set(objects_names)) and np.mean(confidence_scores)>=0.91 \
+                        if {'mother_name', 'job', 'address','cin_date'}.issubset(set(objects_names)) and np.mean(confidence_scores)>=self.opt['cin_conf_thres'] \
                             and np.mean(confidence_scores)>conf_back and blurry == False:
                             conf_back = np.mean(confidence_scores)
                             cin_back_detected = True

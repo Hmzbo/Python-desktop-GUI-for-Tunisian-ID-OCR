@@ -4,10 +4,11 @@ class Ui_Dialog(QtWidgets.QDialog):
     def __init__(self):
         super(Ui_Dialog, self).__init__()
         self.setupUi(self)
+        self.setFixedSize(504, 153)
         
     def setupUi(self, Dialog):
         Dialog.setObjectName("Create new file")
-        Dialog.resize(504, 153)
+        #Dialog.resize(504, 153)
         self.horizontalLayoutWidget = QtWidgets.QWidget(Dialog)
         self.horizontalLayoutWidget.setGeometry(QtCore.QRect(9, 9, 491, 141))
         self.horizontalLayoutWidget.setObjectName("horizontalLayoutWidget")
