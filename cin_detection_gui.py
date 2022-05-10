@@ -20,7 +20,7 @@ import pandas as pd
 import torch.backends.cudnn as cudnn
 import matplotlib.pyplot as plt
 from PIL import Image
-from MyUtils import get_grayscale, remove_noise, thresholding, variance_of_laplacian, sharpen_image, dilate, erode, opening, canny, deskew, white_pad, scale
+from MyUtils import get_grayscale, remove_noise, thresholding, variance_of_laplacian, sharpen_image, deskew, scale
 from arabicocr import arabic_ocr, cleanup_text
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -36,6 +36,11 @@ from utils.plots import plot_one_box
 
 from Dialogs import new_file_dialog, settings_dialog
 
+
+##########################################################################################################
+##################################### Main GUI & Thraed Setup ############################################
+##########################################################################################################
+
 class Ui_MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(Ui_MainWindow, self).__init__(parent)
@@ -43,7 +48,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setupUi(self)
         self.init_slots()
         self.out = None
-        # self.out = cv2.VideoWriter('prediction.avi', cv2.VideoWriter_fourcc(*'XVID'), 20.0, (640, 480))
 
         self.opt={
             'weights':'./weights/best1280.pt',
@@ -75,7 +79,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.opt['half'] = self.half
         cudnn.benchmark = True
 
-        # Load model
+        # Load models
         self.model = attempt_load(self.opt['weights'], map_location=self.opt['device'])  # load FP32 model
         stride = int(self.model.stride.max())  # model stride
         self.imgsz = check_img_size(self.opt['img_size'], s=stride)  # check img_size
@@ -211,6 +215,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.createfile.clicked.connect(self.Create_file)
         self.checkBox.stateChanged.connect(self.save_table_changes)
 
+
     ########### File Menu Setup ##############
 
     def exit_clicked(self):
@@ -235,9 +240,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.opt['cin_sharp_thres']=int(sharp_thresh[:3])
             self.opt['save_rec']=save
         
-    ##########################################
 
     ######### Camera Label Setup #############
+
     def startstop_detection(self):
         worker_exists = False
         for obj in gc.get_objects():
@@ -272,6 +277,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
 
     def signal_receptor(self, dic):
+        ''' 
+        Recieve the emmitted signal from the Camera worker thread and display it on the gui.
+        If both sides of a CIN are detected, stop the detection process and perform enhancement & OCR.
+        '''
+
         self.cameralabel.setPixmap(QtGui.QPixmap.fromImage(dic['Qt_frame']))
 
         if len(dic['results'])==2:
@@ -297,7 +307,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 else:
                     img_mode = None
                 img = scale(img, 50)
-                output, _ = self.enhancer.enhance(img, outscale=2)
+                output, _ = self.enhancer.enhance(img, outscale=2, alpha_upsampler=img_mode)
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
                 for box in bboxes_info:
@@ -376,17 +386,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             
             
             for c in range(self.tableDisplay.columnCount()):
-                self.tableDisplay.setItem(rowPosition, c, QtWidgets.QTableWidgetItem(str(results_df[results_df['Field']==names[c]]['Value'].values[0])))
+                self.tableDisplay.setItem(rowPosition, c, QtWidgets.QTableWidgetItem(str(results_df[results_df['Field']==names[c]]['Value'].values[0])))        
 
 
+    ############# Open, Create & show table file Setup ################
 
-
-            
-            
-
-    ##########################################
-
-    ############# Open & Create table file Setup ################
     def Open_file(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, "Open File", "./created_table_files", "CSV (*.csv);; Excel (*.xls *.xlsx *.xlsm *.xlsb)")
         if "CSV" in path[1]:
@@ -473,13 +477,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     self.table.to_csv(self.table_path, index=False)
         else:
             return None
-    ##########################################
         
     
-
-
-            
-
+##########################################################################################################
+####################################### Webcam Thread Setup ##############################################
+##########################################################################################################
 
 class Worker1(QtCore.QThread):
     # Signal
@@ -569,10 +571,6 @@ class Worker1(QtCore.QThread):
                                 objects_names.append(self.opt['names'][int(cls)])
                                 cropped_imgs.append(im00[y1:y2, x1:x2])
 
-                        # Checking if a CIN is detected and pausing capture if positive,
-                        # and returning detected objects
-                        #im0 = sharpen_image(im0, 1)
-
                         gray = cv2.cvtColor(im0, cv2.COLOR_BGR2GRAY)
                         fm = variance_of_laplacian(gray)
                         blurry = False
@@ -594,7 +592,6 @@ class Worker1(QtCore.QThread):
                             color_text_back = (0,255,0)
                             yolo_res['back']=[bboxes_info, confidence_scores, class_indexes, objects_names, im00, cropped_imgs]
                         
-                        #cv2.rectangle(im0, (0,0), (600,170), (255,255,255), -1, cv2.LINE_AA)
                         cv2.putText(im0, 'CIN Front Detected!', (25,100), cv2.FONT_HERSHEY_DUPLEX, 1, color_text_front, 2, lineType=cv2.LINE_AA)
                         cv2.putText(im0, 'CIN Back Detected!', (25,150), cv2.FONT_HERSHEY_DUPLEX, 1, color_text_back, 2, lineType=cv2.LINE_AA)
 
@@ -620,6 +617,7 @@ class Worker1(QtCore.QThread):
         self.ThreadActive = False
         self.out.release()
         self.quit()
+
 
 
 
