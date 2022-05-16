@@ -91,6 +91,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.opt['names']=self.names
         self.opt['colors']=self.colors
 
+        self.opt['source']=0
+        self.opt['cap_h']=720
+        self.opt['cap_w']=1280
+        self.opt['cin_conf_thres']=0.93
+        self.opt['cin_sharp_thres']=300
+        self.opt['save_rec']=True
+
         print('Initialization successful!')
         
         
@@ -222,15 +229,17 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def settings_clicked(self):
         settings = settings_dialog.Ui_Dialog()
+        settings.move(380,375)
         resolution, camera_index, conf_thresh, sharp_thresh, save = settings.get_inputs()
-        if camera_index:
-            res_dic={720:1280, 480:720, 576:720, 1080:1920}
+        res_dic={720:1280, 480:720, 576:720, 1080:1920}
+        if isinstance(camera_index, int):
             self.opt['source']=int(camera_index)
             self.opt['cap_h']=int(resolution[:-1])
             self.opt['cap_w']=res_dic[int(resolution[:-1])]
             self.opt['cin_conf_thres']=float(int(conf_thresh[:2])/100)
             self.opt['cin_sharp_thres']=int(sharp_thresh[:3])
             self.opt['save_rec']=save
+            self.statusBar().showMessage("Settings updated successfully!",2000)
         
 
     ######### Camera Label Setup #############
@@ -282,7 +291,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.button_startstop_detection.setText(u"Start Detection")
             del(self.CamThread)
             gc.collect()
-            self.cameralabel.setText("MainWindow", "Press 'Start Detection' button\nto start CIN detection process")
+            self.cameralabel.setText("Press 'Start Detection' button\nto start CIN detection process")
 
             self.horizontalLayout.setStretch(0, 3)
             self.horizontalLayout.setStretch(1, 1)
@@ -622,4 +631,5 @@ if __name__ == "__main__":
     ui = Ui_MainWindow()
     ui.show()
     sys.exit(app.exec_())
+
 
